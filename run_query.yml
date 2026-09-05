@@ -35,6 +35,25 @@
       register: query_result
       changed_when: false
 
+    - name: Prepare query data for Excel export
+      ansible.builtin.copy:
+        content: |
+          {
+            "columns": {{ query_result.description | map(attribute='name') | list | to_json }},
+            "rows": {{ query_result.results | to_json }}
+          }
+        dest: query_results.json
+      changed_when: true
+
+    - name: Export query results to Excel
+      ansible.builtin.command:
+        cmd: python3 export_to_excel.py query_results.json query_results.xlsx
+      changed_when: true
+
     - name: Display query results
       ansible.builtin.debug:
         var: query_result.results
+
+    - name: Display Excel file location
+      ansible.builtin.debug:
+        msg: "Excel file created: query_results.xlsx"
