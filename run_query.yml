@@ -1,0 +1,40 @@
+---
+- name: Run SQL Server SELECT query
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - vault.yml
+
+  tasks:
+
+    - name: Validate query is provided
+      ansible.builtin.assert:
+        that:
+          - sql_query is defined
+          - sql_query | trim | length > 0
+        fail_msg: "A SQL query must be provided."
+
+    - name: Validate query is SELECT only
+      ansible.builtin.assert:
+        that:
+          - sql_query | trim | lower | regex_search('^select(\s|$)')
+          - "';' not in sql_query"
+        fail_msg: "Only a single SELECT query is allowed. Multiple SQL statements are not permitted."
+
+    - name: Show query received by Ansible
+      ansible.builtin.debug:
+        msg: "SQL query = [{{ sql_query }}]"
+
+    - name: Execute SELECT query
+      community.general.odbc:
+        dsn: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=172.26.0.1,1433;DATABASE=AdventureWorks2022;UID=ansible_reader;PWD={{ db_password }};Encrypt=yes;TrustServerCertificate=yes;"
+        query: "{{ sql_query }}"
+        commit: false
+      register: query_result
+      changed_when: false
+
+    - name: Display query results
+      ansible.builtin.debug:
+        var: query_result.results

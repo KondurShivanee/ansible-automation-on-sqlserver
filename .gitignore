@@ -1,0 +1,17 @@
+# Ansible Vault
+vault.yml
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# Ansible
+*.retry
+
+# OS / editor files
+.DS_Store
+.vscode/
