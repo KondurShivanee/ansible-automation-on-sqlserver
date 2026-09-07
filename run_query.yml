@@ -4,10 +4,19 @@
   connection: local
   gather_facts: false
 
+  vars:
+    sql_database: ""
+
   vars_files:
     - vault.yml
 
   tasks:
+
+    - name: Validate database is provided
+      ansible.builtin.assert:
+        that:
+          - sql_database | trim | length > 0
+        fail_msg: "A database name must be provided."
 
     - name: Validate query is provided
       ansible.builtin.assert:
@@ -23,17 +32,20 @@
           - "';' not in sql_query"
         fail_msg: "Only a single SELECT query is allowed. Multiple SQL statements are not permitted."
 
-    - name: Show query received by Ansible
+    - name: Show database and query received by Ansible
       ansible.builtin.debug:
-        msg: "SQL query = [{{ sql_query }}]"
+        msg:
+          - "Database = {{ sql_database }}"
+          - "SQL query = [{{ sql_query }}]"
 
     - name: Execute SELECT query
       community.general.odbc:
-        dsn: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=172.26.0.1,1433;DATABASE=AdventureWorks2022;UID=ansible_reader;PWD={{ db_password }};Encrypt=yes;TrustServerCertificate=yes;"
+        dsn: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=172.26.0.1,1433;DATABASE={{ sql_database }};UID=ansible_reader;PWD={{ db_password }};Encrypt=yes;TrustServerCertificate=yes;"
         query: "{{ sql_query }}"
         commit: false
       register: query_result
       changed_when: false
+      
 
     - name: Prepare query data for Excel export
       ansible.builtin.copy:

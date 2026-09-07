@@ -1,5 +1,6 @@
 # Ansible Vault
 vault.yml
+.vault_pass
 
 # Python
 __pycache__/
